@@ -64,21 +64,24 @@ def process_zip_codes(input_file="sample_data.xlsx", sheet_name=0, zip_column=No
         with pd.ExcelWriter(input_file, engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
             zip_df.to_excel(writer, sheet_name=new_sheet_name, index=False)
         
-        # Apply text formatting and create named range
+        #Apply text formatting and create named range
+        ##this helps in getting reference to the new sheet that was just created
         wb = openpyxl.load_workbook(input_file)
+        #this is the sheet we are working with
         ws = wb[new_sheet_name]
         
-        # Format as text for all cells including header
+        #Format as text for all cells including header
         for row in range(1, ws.max_row + 1):
             cell = ws[f"A{row}"]
-            cell.number_format = '@'  # Text format
+            cell.number_format = '@'  #to convert into text format
         
-        # Create a named range 'EE' for the ZIP column
+        #Create a named range 'EE' for the ZIP column, DefinedName is used to create named ranges
         try:
             from openpyxl.workbook.defined_name import DefinedName
             range_name = "EE"
+            #always in the first column
             range_reference = f"{new_sheet_name}!$A$1:$A${ws.max_row}"
-            
+            #delete the same range if it already exists to resolve conflicts
             if range_name in wb.defined_names:
                 del wb.defined_names[range_name]
             
@@ -87,15 +90,17 @@ def process_zip_codes(input_file="sample_data.xlsx", sheet_name=0, zip_column=No
         except:
             pass
         
-        # Save the workbook
+        #Save the workbook
         wb.save(input_file)
-        
         return True
+    
     except Exception as e:
         return False
 if __name__ == "__main__":
+    #gets all the excel files in the current directory
     excel_files = [f for f in os.listdir('.') if f.endswith('.xlsx') or f.endswith('.xls')]
     if excel_files:
+        #processes the first excel file found in the list
         process_zip_codes(excel_files[0])
     else:
         file_name = input("Enter Excel file name: ")
