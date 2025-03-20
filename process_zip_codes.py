@@ -1,124 +1,103 @@
 import pandas as pd
 import re
+import openpyxl
+import os
 
 def process_zip_codes(input_file="sample_data.xlsx", sheet_name=0, zip_column=None):
     """
-    Process ZIP codes in an Excel file by:
-    1. Converting them to 5-digit zero-padded text format
-    2. Truncating to exactly 5 digits if longer
-    3. Replacing invalid ZIP codes (like 00000) with a default value
-    4. Saving the changes back to the original file
-    
-    Parameters:
-    - input_file: Path to the Excel file
-    - sheet_name: Sheet to process (default: 0, the first sheet)
-    - zip_column: Name of the ZIP code column (default: will look for a column named 'ZIP')
+    Creates a new sheet with only the ZIP column formatted as text.
     """
-    print(f"Processing file: {input_file}")
-    
     try:
-        # Read the Excel file
-        xl = pd.ExcelFile(input_file)
-        sheet_names = xl.sheet_names
-        print(f"Found sheets: {sheet_names}")
-        
-        # Use the actual sheet name instead of index
-        actual_sheet_name = sheet_names[sheet_name] if isinstance(sheet_name, int) else sheet_name
-        print(f"Using sheet: {actual_sheet_name}")
-        
-        # Read the specified sheet
+        #read the Excel file
         df = pd.read_excel(input_file, sheet_name=sheet_name)
-        print(f"Successfully read sheet")
-        print(f"Found columns: {df.columns.tolist()}")
         
-        # Find the ZIP column if not specified
+        #find the ZIP column if not specified
         if zip_column is None:
-            # Look for common zip column names (case insensitive)
-            zip_columns = [col for col in df.columns if 'zip' in str(col).lower()]
-            if zip_columns:
-                zip_column = zip_columns[0]
-                print(f"Found ZIP column: {zip_column}")
+            home_zip_columns = [col for col in df.columns if 'home zip' in str(col).lower()]
+            if home_zip_columns:
+                zip_column = home_zip_columns[0]
             else:
-                raise ValueError("ZIP column not found. Please specify the zip_column parameter.")
+                #taking the zip col but not the one with work
+                zip_columns = [col for col in df.columns
+                                if 'zip' in str(col).lower()
+                                and 'work' not in str(col).lower()]
+                if zip_columns:
+                    zip_column = zip_columns[0]
+                else:
+                    raise ValueError("No suitable ZIP column found.")
         
-        # Ensure the specified column exists
-        if zip_column not in df.columns:
-            raise ValueError(f"Column '{zip_column}' not found in the Excel file.")
+        #create a dataframe with only the ZIP column
+        zip_df = df[[zip_column]].copy()
         
-        # Print some stats about the ZIP column before processing
-        print("\nBefore processing:")
-        print(f"ZIP column data type: {df[zip_column].dtype}")
-        print(f"Sample of original ZIP values: {df[zip_column].head(10).tolist()}")
-        print(f"Unique ZIP values count: {df[zip_column].nunique()}")
-        
-        # Count problematic ZIP codes
-        zeros_count = df[df[zip_column] == "00000"].shape[0] + df[df[zip_column] == 0].shape[0]
-        nulls_count = df[zip_column].isna().sum()
-        print(f"Found {zeros_count} entries with '00000' values")
-        print(f"Found {nulls_count} null or missing values")
-        
-        # Process ZIP codes
+        #process ZIP codes
         def format_zip(x):
             if pd.isna(x) or str(x).strip() == '':
-                return '99999'  # Default value instead of blank
+                return ''
             
-            # Try to extract digits only
+            #Extract digits only, this can be excluded as well but if excluded this will throw error or just give an invalid value in the quest report
             digits = re.sub(r'\D', '', str(x))
             
-            # If no digits, use default instead of blank
-            if not digits:
-                return '99999'  # Default value
+            #remove if less than 5 digits
+            if len(digits) < 5:
+                return ''
                 
-            # Convert to integer and back to string to remove leading zeros
-            try:
-                int_zip = int(digits)
+            #If more than 5 digits, trim to first 5
+            trimmed_digits = digits[:5]
+            
+            #get rif of the obvious invalid values
+            if trimmed_digits == "00000":
+                return ''
                 
-                # If it's 0, use default instead of blank
-                if int_zip == 0:
-                    return '99999'  # Default value
-                    
-                # Format as 5-digit string with leading zeros
-                formatted_zip = str(int_zip).zfill(5)[:5]
-                
-                # If the result is "00000", replace with our default
-                if formatted_zip == "00000":
-                    return '99999'
-                    
-                return formatted_zip
-            except ValueError:
-                return '99999'  # Default value for any conversion errors
+            return trimmed_digits
         
-        # Apply the ZIP code formatting
-        df[zip_column] = df[zip_column].apply(format_zip)
+        #apply the format zip function to every single value in the zip column
+        zip_df[zip_column] = zip_df[zip_column].apply(format_zip)
         
-        # Print some stats after processing
-        print("\nAfter processing:")
-        print(f"Sample of processed ZIP values: {df[zip_column].head(10).tolist()}")
-        print(f"Unique ZIP values count: {df[zip_column].nunique()}")
+        #remove rows with empty or invalid ZIP codes from the df object which is getting manipulated in memory
+        zip_df = zip_df[zip_df[zip_column] != '']
         
-        # Count empty values after processing
-        empty_count = df[df[zip_column] == ''].shape[0]
-        print(f"Entries with empty values after processing: {empty_count}")
+        #till this point the original data is untouched
+        #Create a new sheet name
+        new_sheet_name = "ZIPs_Only"
         
-        # Rename the column to "ZIP" if it's not already named that
-        if zip_column.upper() != "ZIP":
-            print(f"Renaming column '{zip_column}' to 'ZIP'")
-            df = df.rename(columns={zip_column: "ZIP"})
-            zip_column = "ZIP"
+        #save to a new sheet
+        with pd.ExcelWriter(input_file, engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
+            zip_df.to_excel(writer, sheet_name=new_sheet_name, index=False)
         
-        # Create a writer with the original file
-        with pd.ExcelWriter(input_file, engine='openpyxl') as writer:
-            # Save the modified sheet - use the actual sheet name
-            df.to_excel(writer, sheet_name=actual_sheet_name, index=False)
+        # Apply text formatting and create named range
+        wb = openpyxl.load_workbook(input_file)
+        ws = wb[new_sheet_name]
         
-        print(f"\nZIP codes processed successfully. Changes saved to {input_file}")
-        return df
-    
+        # Format as text for all cells including header
+        for row in range(1, ws.max_row + 1):
+            cell = ws[f"A{row}"]
+            cell.number_format = '@'  # Text format
+        
+        # Create a named range 'EE' for the ZIP column
+        try:
+            from openpyxl.workbook.defined_name import DefinedName
+            range_name = "EE"
+            range_reference = f"{new_sheet_name}!$A$1:$A${ws.max_row}"
+            
+            if range_name in wb.defined_names:
+                del wb.defined_names[range_name]
+            
+            defined_name = DefinedName(name=range_name, attr_text=range_reference)
+            wb.defined_names.append(defined_name)
+        except:
+            pass
+        
+        # Save the workbook
+        wb.save(input_file)
+        
+        return True
     except Exception as e:
-        print(f"Error processing file: {str(e)}")
-        raise
-
-# Main execution
+        return False
 if __name__ == "__main__":
-    # Process the Excel file with the specified file name
-    process_zip_codes("sample_data.xlsx", zip_column="ZIP")
+    excel_files = [f for f in os.listdir('.') if f.endswith('.xlsx') or f.endswith('.xls')]
+    if excel_files:
+        process_zip_codes(excel_files[0])
+    else:
+        file_name = input("Enter Excel file name: ")
+        if file_name:
+            process_zip_codes(file_name)
