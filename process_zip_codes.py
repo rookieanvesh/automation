@@ -101,7 +101,9 @@ if __name__ == "__main__":
     excel_files = [f for f in os.listdir('.') if f.endswith('.xlsx') or f.endswith('.xls')]
     if excel_files:
         #processes the first excel file found in the list
-        process_zip_codes(excel_files[0])
+        for file in excel_files:
+            print(f"Processing {file}...")
+            process_zip_codes(file)
     else:
         file_name = input("Enter Excel file name: ")
         if file_name:
