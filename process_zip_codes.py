@@ -76,21 +76,38 @@ def process_zip_codes(input_file="sample_data.xlsx", sheet_name=0, zip_column=No
             cell.number_format = '@'  #to convert into text format
         
         #Create a named range 'EE' for the ZIP column, DefinedName is used to create named ranges
+        # Create a named range 'EE' for the ZIP column
         try:
-            from openpyxl.workbook.defined_name import DefinedName
             range_name = "EE"
-            #always in the first column
-            range_reference = f"{new_sheet_name}!$A$1:$A${ws.max_row}"
-            #delete the same range if it already exists to resolve conflicts
+            range_reference = f"'{new_sheet_name}'!$A$1:$A${ws.max_row}"
+            
+            # Remove existing name if present
             if range_name in wb.defined_names:
                 del wb.defined_names[range_name]
             
+            # Create the defined name using the dictionary-style assignment
+            # This is more compatible across different openpyxl versions
+            from openpyxl.workbook.defined_name import DefinedName
             defined_name = DefinedName(name=range_name, attr_text=range_reference)
-            wb.defined_names.append(defined_name)
-        except:
-            pass
-        
-        #Save the workbook
+            wb.defined_names[range_name] = defined_name
+            print(f"Created named range 'EE' for column in {input_file}")
+        except Exception as e:
+            print(f"Error creating named range: {str(e)}")
+            # Use VBA approach as final fallback
+            try:
+                # Create a VBA macro sheet with instructions
+                vba_sheet_name = "VBA_Helper"
+                if vba_sheet_name in wb.sheetnames:
+                    wb.remove(wb[vba_sheet_name])
+                    
+                vba_sheet = wb.create_sheet(vba_sheet_name)
+                vba_sheet["A1"] = "Sub CreateNamedRange()"
+                vba_sheet["A2"] = f"    ThisWorkbook.Names.Add Name:=\"EE\", RefersTo:=\"='{new_sheet_name}'!$A$1:$A${ws.max_row}\""
+                vba_sheet["A3"] = "End Sub"
+                print(f"Created VBA Helper sheet. Run the macro to create the named range.")
+            except:
+                print("Could not create named range or helper. Please create it manually in Excel.")
+                #Save the workbook
         wb.save(input_file)
         return True
     

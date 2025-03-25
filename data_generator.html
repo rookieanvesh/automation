@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Guardian Insurance Company - Sample Data Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        line-height: 1.6;
+      }
+      h1 {
+        color: #0056b3;
+      }
+      button {
+        background-color: #0056b3;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        border-radius: 4px;
+        margin-top: 20px;
+      }
+      button:hover {
+        background-color: #003d82;
+      }
+      .description {
+        background-color: #f8f9fa;
+        border-left: 4px solid #0056b3;
+        padding: 15px;
+        margin: 20px 0;
+      }
+      .preview {
+        margin-top: 30px;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-top: 10px;
+      }
+      table,
+      th,
+      td {
+        border: 1px solid #ddd;
+      }
+      th,
+      td {
+        padding: 8px;
+        text-align: left;
+      }
+      th {
+        background-color: #f2f2f2;
+      }
+      tr:nth-child(even) {
+        background-color: #f9f9f9;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Sample Data Generator</h1>
+
+    <div class="description">
+      <p>
+        This page will generate a sample Excel file with 100 randomly generated
+        employee records for a fictional Guardian Insurance Company. The data
+        includes employee information, department details, and ZIP codes.
+      </p>
+      <p>The Excel file will contain the following columns:</p>
+      <ol>
+        <li>Employee ID</li>
+        <li>Full Name</li>
+        <li>Department</li>
+        <li>Position</li>
+        <li>Salary</li>
+        <li>Years of Service</li>
+        <li>Home ZIP</li>
+        <li>Office Location</li>
+        <li>Performance Rating</li>
+        <li>Insurance Sales (Annual)</li>
+        <li>Work ZIP</li>
+      </ol>
+    </div>
+
+    <button id="generateBtn">Generate Excel File</button>
+
+    <div class="preview">
+      <h2>Data Preview (first 5 rows)</h2>
+      <table id="previewTable">
+        <tr>
+          <th>Employee ID</th>
+          <th>Full Name</th>
+          <th>Department</th>
+          <th>Position</th>
+          <th>Salary</th>
+          <th>Years</th>
+          <th>Home ZIP</th>
+          <th>Office Location</th>
+          <th>Rating</th>
+          <th>Sales</th>
+          <th>Work ZIP</th>
+        </tr>
+      </table>
+    </div>
+
+    <script>
+      // Sample data generator
+      function generateData() {
+        const firstNames = [
+          "James", "Mary", "John", "Patricia", "Robert", "Jennifer", "Michael", "Linda", 
+          "William", "Elizabeth", "David", "Susan", "Richard", "Jessica", "Joseph", "Sarah", 
+          "Thomas", "Karen", "Charles", "Nancy", "Lisa", "Daniel", "Margaret", "Paul", 
+          "Sandra", "Mark", "Ashley", "Steven", "Emily", "Andrew", "Donna", "Kenneth", 
+          "Dorothy", "George", "Michelle", "Joshua", "Carol", "Kevin", "Amanda", "Brian", "Melissa"
+        ];
+
+        const lastNames = [
+          "Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", 
+          "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", 
+          "Thompson", "Garcia", "Martinez", "Robinson", "Clark", "Rodriguez", "Lewis", "Lee", 
+          "Walker", "Hall", "Allen", "Young", "Hernandez", "King", "Wright", "Lopez", 
+          "Hill", "Scott", "Green", "Adams", "Baker", "Gonzalez", "Nelson", "Carter", 
+          "Mitchell", "Perez", "Roberts", "Turner"
+        ];
+
+        const departments = [
+          "Claims Processing", "Underwriting", "Customer Service", "Sales", "Marketing",
+          "Finance", "Human Resources", "IT", "Legal", "Operations"
+        ];
+
+        const positions = {
+          "Claims Processing": [
+            "Claims Adjuster", "Claims Manager", "Claims Specialist", "Claims Analyst"
+          ],
+          "Underwriting": [
+            "Underwriter", "Senior Underwriter", "Underwriting Manager", "Risk Analyst"
+          ],
+          "Customer Service": [
+            "Customer Service Rep", "Customer Service Manager", "Client Relationship Manager"
+          ],
+          "Sales": [
+            "Insurance Agent", "Sales Manager", "Sales Representative", "Account Executive"
+          ],
+          "Marketing": [
+            "Marketing Specialist", "Marketing Manager", "Digital Marketing Analyst", "Product Marketing Manager"
+          ],
+          "Finance": [
+            "Financial Analyst", "Accountant", "Finance Manager", "Controller"
+          ],
+          "Human Resources": [
+            "HR Specialist", "HR Manager", "Recruiter", "Benefits Administrator"
+          ],
+          "IT": [
+            "IT Specialist", "Systems Analyst", "Network Administrator", "Software Developer"
+          ],
+          "Legal": [
+            "Legal Counsel", "Compliance Officer", "Legal Assistant", "Regulatory Specialist"
+          ],
+          "Operations": [
+            "Operations Analyst", "Operations Manager", "Business Analyst", "Project Manager"
+          ]
+        };
+
+        const officeLocations = [
+          "New York, NY", "Los Angeles, CA", "Chicago, IL", "Houston, TX", "Phoenix, AZ",
+          "Philadelphia, PA", "San Antonio, TX", "San Diego, CA", "Dallas, TX", "San Jose, CA"
+        ];
+
+        const zipCodes = {
+          "New York, NY": ["10001", "10002", "10003", "10004", "10005", "10006", "10007"],
+          "Los Angeles, CA": ["90001", "90002", "90003", "90004", "90005", "90006", "90007"],
+          "Chicago, IL": ["60601", "60602", "60603", "60604", "60605", "60606", "60607"],
+          "Houston, TX": ["77001", "77002", "77003", "77004", "77005", "77006", "77007"],
+          "Phoenix, AZ": ["85001", "85002", "85003", "85004", "85005", "85006", "85007"],
+          "Philadelphia, PA": ["19101", "19102", "19103", "19104", "19105", "19106", "19107"],
+          "San Antonio, TX": ["78201", "78202", "78203", "78204", "78205", "78206", "78207"],
+          "San Diego, CA": ["92101", "92102", "92103", "92104", "92105", "92106", "92107"],
+          "Dallas, TX": ["75201", "75202", "75203", "75204", "75205", "75206", "75207"],
+          "San Jose, CA": ["95101", "95102", "95103", "95104", "95105", "95106", "95107"]
+        };
+
+        // Short ZIP codes for testing (1-4 digits)
+        const shortZips = ["1", "12", "123", "1234", "234", "34", "4", "567", "89", "901", "23", "456"];
+
+        const performanceRatings = [
+          "Exceptional", "Exceeds Expectations", "Meets Expectations", "Needs Improvement", "Unsatisfactory"
+        ];
+
+        const data = [];
+
+        // Generate 100 employee records
+        for (let i = 0; i < 100; i++) {
+          const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+          const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+          const fullName = `${firstName} ${lastName}`;
+          
+          const department = departments[Math.floor(Math.random() * departments.length)];
+          const position = positions[department][Math.floor(Math.random() * positions[department].length)];
+          
+          // Salary based on position (some randomness)
+          let baseSalary;
+          if (position.includes("Manager") || position.includes("Senior")) {
+            baseSalary = 80000 + Math.floor(Math.random() * 40000);
+          } else if (
+            position.includes("Analyst") ||
+            position.includes("Developer") ||
+            position.includes("Underwriter")
+          ) {
+            baseSalary = 65000 + Math.floor(Math.random() * 30000);
+          } else {
+            baseSalary = 45000 + Math.floor(Math.random() * 25000);
+          }
+          
+          const yearsOfService = Math.floor(Math.random() * 20) + 1;
+          
+          // Small salary increase based on years of service
+          const salary = baseSalary + yearsOfService * 1000;
+          
+          const officeLocation = officeLocations[Math.floor(Math.random() * officeLocations.length)];
+          
+          // Generate Home ZIP code with some faulty values for testing
+          let homeZip;
+          const zipErrorType = Math.floor(Math.random() * 20); // Create different types of ZIP errors
+          
+          if (zipErrorType === 0) {
+            // Error type 1: All zeros
+            homeZip = "00000";
+          } else if (zipErrorType === 1) {
+            // Error type 2: Too many digits
+            homeZip = Math.floor(Math.random() * 900000000) + 100000000;
+          } else if (zipErrorType >= 2 && zipErrorType <= 6) {
+            // Error type 3: Too few digits (more frequent now)
+            homeZip = shortZips[Math.floor(Math.random() * shortZips.length)];
+          } else if (zipErrorType === 7) {
+            // Error type 4: Non-numeric characters
+            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            homeZip = Math.floor(Math.random() * 90000) + 10000 + chars.charAt(Math.floor(Math.random() * chars.length));
+          } else if (zipErrorType === 8) {
+            // Error type 5: Empty value
+            homeZip = "";
+          } else if (zipErrorType === 9) {
+            // Error type 6: Letters only
+            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            homeZip = "";
+            for (let j = 0; j < 5; j++) {
+              homeZip += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+          } else if (zipErrorType === 10) {
+            // Error type 7: With hyphens (e.g., 12345-6789)
+            homeZip = Math.floor(Math.random() * 90000) + 10000 + "-" + (Math.floor(Math.random() * 9000) + 1000);
+          } else {
+            // Valid ZIP code
+            const zipCodesForLocation = zipCodes[officeLocation];
+            homeZip = zipCodesForLocation[Math.floor(Math.random() * zipCodesForLocation.length)];
+          }
+          
+          // Always use valid ZIP codes for Work ZIP
+          const workZipCodesForLocation = zipCodes[officeLocation];
+          const workZip = workZipCodesForLocation[Math.floor(Math.random() * workZipCodesForLocation.length)];
+          
+          const performanceRating = performanceRatings[Math.floor(Math.random() * performanceRatings.length)];
+          
+          // Sales figures (higher for sales roles)
+          let salesFigure;
+          if (department === "Sales") {
+            salesFigure = 500000 + Math.floor(Math.random() * 1500000);
+          } else if (["Marketing", "Customer Service"].includes(department)) {
+            salesFigure = 200000 + Math.floor(Math.random() * 800000);
+          } else {
+            salesFigure = 50000 + Math.floor(Math.random() * 200000);
+          }
+          
+          data.push({
+            "Employee ID": `EMP${(10000 + i).toString()}`,
+            "Full Name": fullName,
+            "Department": department,
+            "Position": position,
+            "Salary": salary,
+            "Years of Service": yearsOfService,
+            "Home ZIP": homeZip,
+            "Office Location": officeLocation,
+            "Performance Rating": performanceRating,
+            "Insurance Sales (Annual)": salesFigure,
+            "Work ZIP": workZip
+          });
+        }
+        
+        return data;
+      }
+
+      // Function to generate and download Excel file
+      function generateExcel() {
+        const data = generateData();
+        
+        // Display preview (first 5 rows)
+        const previewTable = document.getElementById("previewTable");
+        
+        // Clear existing rows except header
+        while (previewTable.rows.length > 1) {
+          previewTable.deleteRow(1);
+        }
+        
+        // Add preview rows
+        for (let i = 0; i < Math.min(5, data.length); i++) {
+          const row = previewTable.insertRow();
+          row.insertCell().textContent = data[i]["Employee ID"];
+          row.insertCell().textContent = data[i]["Full Name"];
+          row.insertCell().textContent = data[i]["Department"];
+          row.insertCell().textContent = data[i]["Position"];
+          row.insertCell().textContent = `$${data[i]["Salary"].toLocaleString()}`;
+          row.insertCell().textContent = data[i]["Years of Service"];
+          row.insertCell().textContent = data[i]["Home ZIP"];
+          row.insertCell().textContent = data[i]["Office Location"];
+          row.insertCell().textContent = data[i]["Performance Rating"];
+          row.insertCell().textContent = `$${data[i]["Insurance Sales (Annual)"].toLocaleString()}`;
+          row.insertCell().textContent = data[i]["Work ZIP"];
+        }
+        
+        // Create workbook and worksheet
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(data);
+        
+        // Set column widths
+        const wscols = [
+          { wch: 10 }, // Employee ID
+          { wch: 20 }, // Full Name
+          { wch: 18 }, // Department
+          { wch: 25 }, // Position
+          { wch: 12 }, // Salary
+          { wch: 8 },  // Years of Service
+          { wch: 8 },  // Home ZIP
+          { wch: 18 }, // Office Location
+          { wch: 18 }, // Performance Rating
+          { wch: 18 }, // Insurance Sales
+          { wch: 8 }   // Work ZIP
+        ];
+        ws["!cols"] = wscols;
+        
+        // Add worksheet to workbook
+        XLSX.utils.book_append_sheet(wb, ws, "Guardian Insurance Data");
+        
+        // Generate Excel file
+        const wbout = XLSX.write(wb, { bookType: "xlsx", type: "binary" });
+        
+        function s2ab(s) {
+          const buf = new ArrayBuffer(s.length);
+          const view = new Uint8Array(buf);
+          for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xff;
+          return buf;
+        }
+        
+        // Save file
+        saveAs(
+          new Blob([s2ab(wbout)], { type: "application/octet-stream" }),
+          "Guardian_Insurance_Data.xlsx"
+        );
+      }
+
+      // Add event listener to button
+      document
+        .getElementById("generateBtn")
+        .addEventListener("click", generateExcel);
+    </script>
+  </body>
+</html>
